@@ -1,8 +1,12 @@
 package com.jin.sns8.activity;
 
+import static com.jin.sns8.Util.showToast;
+
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -23,6 +27,16 @@ import com.jin.sns8.fragment.UserInfoFragment;
 import com.jin.sns8.fragment.UserListFragment;
 
 import java.io.File;
+import java.security.MessageDigest;
+
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.Signature;
+import android.util.Base64;
+import android.util.Log;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 public class MainActivity extends BasicActivity {
     private static final String TAG = "MainActivity";
@@ -133,25 +147,36 @@ public class MainActivity extends BasicActivity {
         }
     }
 
-    protected boolean checkRooting(){
+    protected boolean checkRooting() {
         final String[] files = {
                 "/sbin/su", "system/su", "system/bin/su", "system/sbin/su", "system/xbin/su",
                 "/system/.ext/.su", "system/bin/.ext", "su", "busybox", "supersu", "Superuser.apk",
-                "KingoUser.apk", "SuperSu.apk","magisk"};
+                "KingoUser.apk", "SuperSu.apk","magisk", "/sbin/adbd"};
         String buildTags = Build.TAGS;
 
         if (buildTags != null && buildTags.contains("test-keys")){
+            showToast(MainActivity.this, "루팅이 탐지되었습니다.");
             return true;
         }
 
         for (String path : files){
             if(new File(path).exists()){
+                showToast(MainActivity.this, "앱 위변조가 탐지되었습니다.");
                 return true;
             }
         }
 
         try {
             Runtime.getRuntime().exec("su");
+            showToast(MainActivity.this, "루팅이 탐지되었습니다.");
+            try
+            {
+                Thread.sleep(1000);
+                System.exit(0);
+            } catch (InterruptedException e)
+            {
+                e.printStackTrace();
+            }
             return true;
         }
         catch (Exception e){
