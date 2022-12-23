@@ -158,14 +158,12 @@ public class MainActivity extends BasicActivity {
             showToast(MainActivity.this, "루팅이 탐지되었습니다.");
             return true;
         }
-
         for (String path : files){
             if(new File(path).exists()){
                 showToast(MainActivity.this, "앱 위변조가 탐지되었습니다.");
                 return true;
             }
         }
-
         try {
             Runtime.getRuntime().exec("su");
             showToast(MainActivity.this, "루팅이 탐지되었습니다.");
