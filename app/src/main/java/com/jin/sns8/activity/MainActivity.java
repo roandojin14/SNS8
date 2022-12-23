@@ -50,6 +50,7 @@ public class MainActivity extends BasicActivity {
         setToolbarTitle(getResources().getString(R.string.app_name));
 
         init();
+        findChangeApp();
         checkRooting();
 
     }
@@ -180,6 +181,57 @@ public class MainActivity extends BasicActivity {
         catch (Exception e){
             return false;
         }
+    }
+
+    public void findChangeApp() {
+        PackageInfo packageInfo = null;
+        try {
+            packageInfo = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_SIGNATURES);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        if (packageInfo == null)
+            Log.e("KeyHash", "KeyHash:null");
+
+        for (Signature signature : packageInfo.signatures) {
+            try {
+                MessageDigest md = MessageDigest.getInstance("SHA");
+                md.update(signature.toByteArray());
+                Log.d("KeyHash", Base64.encodeToString(md.digest(), Base64.DEFAULT));
+            } catch (NoSuchAlgorithmException e) {
+                Log.e("KeyHash", "Unable to get MessageDigest. signature=" + signature, e);
+            }
+        }
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        DocumentReference docRef = db.collection("hash").document("\n" +
+                "n8cp0ZIwT9s7t1A44Mol");
+        docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot document = task.getResult();
+                    if (document.exists()) {
+                        if (document.getData() != signature ){
+                            showToast(MainActivity.this, "앱 위변조가 탐지되었습니다.");
+                            try
+                            {
+                                Thread.sleep(1000);
+                                System.exit(0);
+                            } catch (InterruptedException e)
+                            {
+                                e.printStackTrace();
+                            }
+                        }
+                    } else {
+                        Log.d(TAG, "No such document");
+                    }
+                } else {
+                    Log.d(TAG, "get failed with ", task.getException());
+                }
+            }
+        });
     }
 
     private void myStartActivity(Class c) {
